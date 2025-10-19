@@ -440,9 +440,21 @@ func main() {
 		httpServer.HandleFunc("/api/localsend/v2/info", handlers.GetInfoHandler)
 		httpServer.HandleFunc("/api/localsend/v2/cancel", handlers.HandleCancel)
 	}
+	// CORS middleware to allow browser requests
+	corsHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		httpServer.ServeHTTP(w, r)
+	})
+
 	go func() {
 		logger.Info("Server started at :" + fmt.Sprintf("%d", port))
-		if err := http.ListenAndServe(":"+fmt.Sprintf("%d", port), httpServer); err != nil {
+		if err := http.ListenAndServe(":"+fmt.Sprintf("%d", port), corsHandler); err != nil {
 			log.Fatalf("Server failed: %v", err)
 		}
 	}()
